@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 )
@@ -15,6 +16,10 @@ func init() {
 	flag.Parse()
 }
 
+type fileInfo struct {
+	size     int64
+	filename string
+}
 type Range struct {
 	Start int
 	End   int
@@ -29,7 +34,11 @@ type Downloader struct {
 
 // 下载文件，等待所有 goroutine 返回
 func (loader *Downloader) Down(thread int) error {
-	fh, err := os.OpenFile(loader.File, os.O_CREATE|os.O_RDWR, 0644)
+	info, err := getFileInfo(loader.Url)
+	if err != nil {
+		return err
+	}
+	fh, err := os.OpenFile(info.filename, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		if err != nil {
 			return err
@@ -58,8 +67,24 @@ func (loader *Downloader) down(r Range) error {
 }
 
 // 获取分配下载区间
-func (load *Downloader) getRange() ([]Range, error) {
+func (loader *Downloader) getRange() ([]Range, error) {
+	// 链接服务器，获取文件大小
+	res, err := http.Get(loader.Url)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	log.Printf("content length %d", res.ContentLength)
+
 	return nil, nil
+}
+
+func getFileInfo(url string) (*fileInfo, error) {
+	return &fileInfo{
+		size:     0,
+		filename: "a.txt",
+	}, nil
+
 }
 
 func main() {
