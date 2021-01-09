@@ -5,14 +5,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"sync"
 )
 
 var u string
 var thread int
+var filename string
 
 func init() {
 	flag.StringVar(&u, "url", "", "http[s] link url")
+	flag.StringVar(&filename, "o", "", "filename ")
 	flag.Parse()
 }
 
@@ -21,8 +24,8 @@ type fileInfo struct {
 	filename string
 }
 type Range struct {
-	Start int
-	End   int
+	Start int64
+	End   int64
 }
 
 type Downloader struct {
@@ -63,6 +66,8 @@ func (loader *Downloader) Down(thread int) error {
 // 下载分片
 func (loader *Downloader) down(r Range) error {
 	defer loader.wg.Add(-1)
+	log.Printf("downloading content range %d to %d\n", r.Start, r.End)
+	loader.fh.Seek(r.Start, 0)
 	return nil
 }
 
@@ -74,9 +79,22 @@ func (loader *Downloader) getRange() ([]Range, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	log.Printf("content length %d", res.ContentLength)
-
-	return nil, nil
+	log.Printf("download file from %s,content length %d", loader.Url, res.ContentLength)
+	var result []Range
+	avg := res.ContentLength / int64(runtime.NumCPU())
+	var start, end int64
+	for {
+		if int64(start+avg) >= res.ContentLength {
+			end = res.ContentLength
+			result = append(result, Range{Start: start, End: end})
+			break
+		} else {
+			end = start + avg
+			result = append(result, Range{Start: start, End: end})
+		}
+		start = end + 1
+	}
+	return result, nil
 }
 
 func getFileInfo(url string) (*fileInfo, error) {
