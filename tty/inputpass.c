@@ -14,7 +14,11 @@ int main(){
     info.c_lflag = ~ECHO;
     printf("enter passwd:");
     scanf("%s",buffer);
+    printf("passwd: %s\n",buffer);
     info.c_lflag = ECHO;
+    tcsetattr(0,TCSANOW,&info);
+    printf("enter passwd:");
+    scanf("%s",buffer);
     printf("passwd: %s\n",buffer);
     
     return 0;
