@@ -9,3 +9,6 @@ vscode:
   extensions:
     - golang.go
     - ms-vscode.cpptools
+ports:
+  - port: 3000-8999
+    onOpen: ignore
