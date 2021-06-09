@@ -1,10 +1,9 @@
 
 tasks:
   - init: |
-      go get github.com/spf13/cobra/cobra
-      go build
+      echo hello
     command: |
-      ./mycli --help
+      echo hello
 vscode:
   extensions:
     - golang.go
